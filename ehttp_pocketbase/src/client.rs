@@ -2,7 +2,6 @@ use serde::Deserialize;
 
 use crate::requester::Requester;
 
-
 #[derive(Debug, Clone)]
 pub struct Client {
     pub base_url: String,
@@ -15,15 +14,15 @@ pub struct HealthCheckResponse {
     pub message: String,
 }
 
-impl Client{
+impl Client {
     pub fn new(base_url: impl ToString) -> Self {
         Self {
             base_url: base_url.to_string(),
             auth_token: None,
         }
     }
-    pub fn health_check(&self) {
+    pub fn health_check(&self) -> Result<ehttp::Response, String> {
         let url = format!("{}/api/health", self.base_url);
-        Requester::get(self, url);
+        Requester::get(self, url)
     }
 }

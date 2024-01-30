@@ -3,3 +3,4 @@ members = [
     "bevy_pocketbase",
     "ehttp_pocketbase"
 ]
+resolver = "2"

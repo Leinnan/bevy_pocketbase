@@ -1,7 +1,6 @@
 pub mod client;
 pub mod requester;
 
-
 pub fn add(left: usize, right: usize) -> usize {
     left + right
 }
