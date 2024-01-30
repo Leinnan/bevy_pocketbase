@@ -5,6 +5,8 @@ use std::sync::mpsc::channel;
 pub struct Requester;
 
 impl Requester {
+
+    /// Adds authorization headers to the request
     fn with_auth(partial_request: ehttp::Request, client: &Client) -> ehttp::Request {
         let mut request = partial_request.clone();
         match client.auth_token.as_ref() {
@@ -15,6 +17,7 @@ impl Requester {
             None => partial_request,
         }
     }
+
     pub fn get(client: &Client, url: impl ToString) -> Result<ehttp::Response, String> {
         let mut request = Request::get(url);
         let (sender, receiver) = channel();
