@@ -1,7 +1,5 @@
 use crate::client::Client;
 use ehttp::Request;
-use std::sync::mpsc::channel;
-
 pub struct Requester;
 
 impl Requester {
@@ -18,14 +16,15 @@ impl Requester {
         }
     }
 
-    pub fn get(client: &Client, url: impl ToString) -> Result<ehttp::Response, String> {
-        let mut request = Request::get(url);
-        let (sender, receiver) = channel();
-        request = Requester::with_auth(request, client);
+    pub fn get(client: &Client, url: impl ToString) -> Request {
+        let request = Requester::with_auth(Request::get(url), client);
         println!("Calling {}", request.url);
-        ehttp::fetch(request, move |response| {
-            sender.send(response.clone()).unwrap();
-        });
-        receiver.recv().unwrap()
+        request
+    }
+
+    pub fn post(client: &Client, url:impl ToString, body_content: impl ToString) -> Request {
+        let mut request = Requester::with_auth(Request::post(url, body_content.to_string().into_bytes()), client);
+        request.headers.insert("Content-Type", "application/json");
+        request
     }
 }
