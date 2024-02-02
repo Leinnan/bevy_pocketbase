@@ -12,27 +12,9 @@ fn main() {
             ))),
         )
         .add_plugins((HttpClientPlugin, PocketBasePlugin))
-        .init_resource::<ApiTimer>()
-        .add_systems(Update, send_request)
+        .init_resource::<PocketbaseClient>()
         .add_systems(OnEnter(PocketbaseStatus::WaitingForCredentials), try_login)
         .run();
-}
-
-#[derive(Resource, Deref, DerefMut)]
-pub struct ApiTimer(pub Timer);
-
-impl Default for ApiTimer {
-    fn default() -> Self {
-        Self(Timer::from_seconds(3.0, TimerMode::Once))
-    }
-}
-
-fn send_request(mut _cmd: Commands, time: Res<Time>, mut timer: ResMut<ApiTimer>) {
-    timer.tick(time.delta());
-
-    if timer.just_finished() {
-        _cmd.insert_resource(PocketbaseClient::default());
-    }
 }
 
 fn try_login(mut ev: EventWriter<PocketBaseLoginEvent>) {

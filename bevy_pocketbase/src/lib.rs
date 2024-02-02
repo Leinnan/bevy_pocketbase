@@ -73,7 +73,10 @@ fn connection_response(
                 }
             }
             None => {
-                println!("Failed to parse: {:?}", response.response.status);
+                println!("Failed to parse: {:?}", response.result);
+                commands.spawn(TypedRequest::<HealthCheckResponse>::new(
+                    client.health_check(),
+                ));
             }
         }
         commands.entity(e).despawn_recursive();
@@ -95,7 +98,7 @@ fn handle_login(
                 next_state.set(state::PocketbaseStatus::LoggedIn);
             }
             None => {
-                println!("Failed to parse: {:?}", response.response.status);
+                println!("Failed to parse: {:?}", response.result);
             }
         }
         commands.entity(entity).despawn_recursive();
