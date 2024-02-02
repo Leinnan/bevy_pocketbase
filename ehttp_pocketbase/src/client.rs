@@ -1,14 +1,13 @@
 use ehttp::Request;
 use serde::Deserialize;
-use serde_json::json;
 
-use crate::requester::Requester;
+use crate::{auth::AuthManager, requester::Requester};
 
 #[derive(Debug, Clone)]
 pub struct Client<T> {
     pub base_url: String,
     pub auth_token: Option<String>,
-    users_collection: String,
+    pub users_collection: String,
     pub user: Option<T>,
 }
 
@@ -54,23 +53,15 @@ impl<T> Client<T> {
         }
     }
 
+    pub fn auth(&self) -> AuthManager<T> {
+        AuthManager::<T>{
+            client: &self
+        }
+    }
+
     pub fn health_check(&self) -> Request {
         let url = format!("{}/api/health", self.base_url);
         Requester::get(self, url)
-    }
-
-    pub fn auth_with_password(&self, identifier: &str, secret: &str) -> Request {
-        let url = format!(
-            "{}/api/collections/{}/auth-with-password",
-            self.base_url, self.users_collection
-        );
-
-        let auth_payload = json!({
-            "identity": identifier,
-            "password": secret
-        });
-
-        Requester::post(self, url, auth_payload)
     }
 
     pub fn records(&self, collection: impl ToString) -> Request {
@@ -81,18 +72,6 @@ impl<T> Client<T> {
         );
 
         Requester::get(self, url)
-    }
-
-    pub fn get_avatar(&self, user: &User) -> Option<Request> {
-        if user.avatar.is_empty() {
-            return None;
-        }
-        let url = format!(
-            "{}/api/files/{}/{}/{}",
-            self.base_url, self.users_collection, user.id, user.avatar
-        );
-
-        Some(Requester::get(self, url))
     }
 }
 

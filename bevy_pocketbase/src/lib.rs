@@ -1,6 +1,6 @@
 use bevy::prelude::*;
 use bevy_http_client::typed::{TypedRequest, TypedResponse};
-use ehttp_pocketbase::client::{AuthSuccessResponse, Client, HealthCheckResponse, User};
+use ehttp_pocketbase::prelude::*;
 
 mod events;
 mod state;
@@ -112,7 +112,7 @@ fn try_login(
 ) {
     for ev in login_ev.read() {
         commands.spawn(TypedRequest::<AuthSuccessResponse<User>>::new(
-            client.auth_with_password(&ev.user_name_or_mail, &ev.password),
+            client.auth().login(&ev.user_name_or_mail, &ev.password),
         ));
     }
 }
