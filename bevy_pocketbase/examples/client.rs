@@ -1,7 +1,6 @@
 use bevy::{app::ScheduleRunnerPlugin, prelude::*};
 use bevy_http_client::HttpClientPlugin;
-use bevy_pocketbase::*;
-use bevy_pocketbase::state::PocketbaseStatus;
+use bevy_pocketbase::prelude::*;
 
 use std::time::Duration;
 
@@ -15,11 +14,7 @@ fn main() {
         .add_plugins((HttpClientPlugin, PocketBasePlugin))
         .init_resource::<ApiTimer>()
         .add_systems(Update, send_request)
-        .add_systems(
-            OnEnter(PocketbaseStatus::WaitingForCredentials),
-            try_login,
-        )
-        // .add_systems(Startup, |mut ev : EventWriter<PocketBaseLogin>|{ ev.send(PocketBaseLogin{user_name_or_mail:"users91599".to_string(),password: "121113456789".to_string()})})
+        .add_systems(OnEnter(PocketbaseStatus::WaitingForCredentials), try_login)
         .run();
 }
 
@@ -40,8 +35,8 @@ fn send_request(mut _cmd: Commands, time: Res<Time>, mut timer: ResMut<ApiTimer>
     }
 }
 
-fn try_login(mut ev: EventWriter<PocketBaseLogin>) {
-    ev.send(PocketBaseLogin {
+fn try_login(mut ev: EventWriter<PocketBaseLoginEvent>) {
+    ev.send(PocketBaseLoginEvent {
         user_name_or_mail: "users91599".to_string(),
         password: "121113456789".to_string(),
     });

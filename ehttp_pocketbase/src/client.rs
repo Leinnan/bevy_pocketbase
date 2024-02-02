@@ -23,8 +23,15 @@ pub struct HealthCheckResponse {
     pub message: String,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Clone, Deserialize)]
 pub struct AuthSuccessResponse {
+    pub token: String,
+}
+
+
+
+#[derive(Debug, Clone, Deserialize)]
+pub struct CollectionsListReponse {
     pub token: String,
 }
 
