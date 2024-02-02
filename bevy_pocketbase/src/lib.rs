@@ -1,6 +1,6 @@
 use bevy::prelude::*;
 use bevy_http_client::typed::{TypedRequest, TypedResponse};
-use ehttp_pocketbase::client::{AuthSuccessResponse, Client, HealthCheckResponse};
+use ehttp_pocketbase::client::{AuthSuccessResponse, Client, HealthCheckResponse, User};
 
 mod events;
 mod state;
@@ -16,13 +16,12 @@ pub mod prelude {
 pub struct PocketBasePlugin;
 
 #[derive(Resource, Deref, DerefMut, Default)]
-pub struct PocketbaseClient(pub Client);
-
+pub struct PocketbaseClient(pub Client<User>);
 
 impl Plugin for PocketBasePlugin {
     fn build(&self, app: &mut App) {
         bevy_http_client::register_request_type::<HealthCheckResponse>(app);
-        bevy_http_client::register_request_type::<AuthSuccessResponse>(app);
+        bevy_http_client::register_request_type::<AuthSuccessResponse<User>>(app);
         app.add_event::<events::PocketBaseLoginEvent>();
         app.add_state::<state::PocketbaseStatus>();
         app.add_systems(
@@ -83,7 +82,7 @@ fn connection_response(
 
 fn handle_login(
     mut commands: Commands,
-    responses: Query<(Entity, &TypedResponse<AuthSuccessResponse>)>,
+    responses: Query<(Entity, &TypedResponse<AuthSuccessResponse<User>>)>,
     mut next_state: ResMut<NextState<state::PocketbaseStatus>>,
     mut client: ResMut<PocketbaseClient>,
 ) {
@@ -92,6 +91,7 @@ fn handle_login(
             Some(v) => {
                 println!("response: {:?}", v);
                 client.auth_token = Some(v.token);
+                client.user = Some(v.record);
                 next_state.set(state::PocketbaseStatus::LoggedIn);
             }
             None => {
@@ -108,7 +108,7 @@ fn try_login(
     mut login_ev: EventReader<events::PocketBaseLoginEvent>,
 ) {
     for ev in login_ev.read() {
-        commands.spawn(TypedRequest::<AuthSuccessResponse>::new(
+        commands.spawn(TypedRequest::<AuthSuccessResponse<User>>::new(
             client.auth_with_password(&ev.user_name_or_mail, &ev.password),
         ));
     }
