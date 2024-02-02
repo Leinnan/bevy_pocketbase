@@ -8,6 +8,7 @@ use crate::requester::Requester;
 pub struct Client {
     pub base_url: String,
     pub auth_token: Option<String>,
+    users_collection: String
 }
 
 impl Default for Client {
@@ -24,7 +25,7 @@ pub struct HealthCheckResponse {
 
 #[derive(Debug, Deserialize)]
 pub struct AuthSuccessResponse {
-    token: String,
+    pub token: String,
 }
 
 impl Client {
@@ -32,6 +33,7 @@ impl Client {
         Self {
             base_url: base_url.to_string(),
             auth_token: None,
+            users_collection: "users".to_string()
         }
     }
 
@@ -40,10 +42,10 @@ impl Client {
         Requester::get(self, url)
     }
 
-    pub fn auth_with_password(&self, collection: &str, identifier: &str, secret: &str) -> Request {
+    pub fn auth_with_password(&self, identifier: &str, secret: &str) -> Request {
         let url = format!(
             "{}/api/collections/{}/auth-with-password",
-            self.base_url, collection
+            self.base_url, self.users_collection
         );
 
         let auth_payload = json!({
@@ -53,4 +55,6 @@ impl Client {
 
         Requester::post(self, url,auth_payload)
     }
+
+
 }

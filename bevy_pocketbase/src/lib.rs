@@ -1,56 +1,112 @@
 use bevy::prelude::*;
-use bevy_http_client::typed::TypedRequest;
+use bevy_http_client::typed::{TypedRequest, TypedResponse};
 use ehttp_pocketbase::client::{AuthSuccessResponse, Client, HealthCheckResponse};
 
-/// Add the plugin to bevy to support send http request and handle response.
-///
-/// # Example
-/// ```no_run
-/// # use bevy::prelude::*;
-/// # use bevy_pocketbase::HttpClientPlugin;
-///
-/// App::new()
-/// .add_plugins(DefaultPlugins)
-/// .add_plugins(HttpClientPlugin).run();
-/// ```
+pub mod state;
+
 #[derive(Default)]
 pub struct PocketBasePlugin;
 
 #[derive(Resource, Deref, DerefMut, Default)]
 pub struct PocketbaseClient(pub Client);
 
-#[derive(Event,Default)]
-pub struct PocketBaseInit;
-
 #[derive(Event)]
 pub struct PocketBaseLogin {
     pub user_name_or_mail: String,
-    pub password: String
+    pub password: String,
 }
 
 impl Plugin for PocketBasePlugin {
     fn build(&self, app: &mut App) {
         bevy_http_client::register_request_type::<HealthCheckResponse>(app);
         bevy_http_client::register_request_type::<AuthSuccessResponse>(app);
-        app.add_event::<PocketBaseInit>();
         app.add_event::<PocketBaseLogin>();
-        app.add_systems(Update, init);
-        if !app.world.contains_resource::<PocketbaseClient>() {
-            app.init_resource::<PocketbaseClient>();
-        }
+        app.add_state::<state::PocketbaseStatus>();
+        app.add_systems(
+            Update,
+            (|mut next_state: ResMut<NextState<state::PocketbaseStatus>>| {
+                next_state.set(state::PocketbaseStatus::CheckInternet);
+            })
+            .run_if(resource_added::<PocketbaseClient>()),
+        );
+        app.add_systems(
+            OnEnter(state::PocketbaseStatus::CheckInternet),
+            check_connection,
+        );
+        app.add_systems(
+            Update,
+            connection_response.run_if(in_state(state::PocketbaseStatus::CheckInternet)),
+        );
+        app.add_systems(
+            Update,
+            (handle_login, try_login)
+                .run_if(in_state(state::PocketbaseStatus::WaitingForCredentials)),
+        );
     }
 }
 
-fn init(mut commands: Commands,
-        mut ev: EventReader<PocketBaseInit>,
-        mut login_ev: EventReader<PocketBaseLogin>,
-        client: Res<PocketbaseClient>) {
-    for _ in ev.read() {
-        commands.spawn(TypedRequest::<HealthCheckResponse>::new(
-            client.health_check(),
-        ));
+fn check_connection(mut commands: Commands, client: Res<PocketbaseClient>) {
+    commands.spawn(TypedRequest::<HealthCheckResponse>::new(
+        client.health_check(),
+    ));
+}
+
+fn connection_response(
+    mut commands: Commands,
+    client: Res<PocketbaseClient>,
+    q: Query<
+        (Entity, &TypedResponse<HealthCheckResponse>),
+        Added<TypedResponse<HealthCheckResponse>>,
+    >,
+    mut next_state: ResMut<NextState<state::PocketbaseStatus>>,
+) {
+    for (e, response) in q.iter() {
+        match response.parse() {
+            Some(v) => {
+                println!("response: {:?}", v);
+                if client.auth_token.is_some() {
+                    next_state.set(state::PocketbaseStatus::LoggedIn);
+                } else {
+                    next_state.set(state::PocketbaseStatus::WaitingForCredentials);
+                }
+            }
+            None => {
+                println!("Failed to parse: {:?}", response.response.status);
+            }
+        }
+        commands.entity(e).despawn_recursive();
     }
+}
+
+fn handle_login(
+    mut commands: Commands,
+    responses: Query<(Entity, &TypedResponse<AuthSuccessResponse>)>,
+    mut next_state: ResMut<NextState<state::PocketbaseStatus>>,
+    mut client: ResMut<PocketbaseClient>,
+) {
+    for (entity, response) in responses.iter() {
+        match response.parse() {
+            Some(v) => {
+                println!("response: {:?}", v);
+                client.auth_token = Some(v.token);
+                next_state.set(state::PocketbaseStatus::LoggedIn);
+            }
+            None => {
+                println!("Failed to parse: {:?}", response.response.status);
+            }
+        }
+        commands.entity(entity).despawn_recursive();
+    }
+}
+
+fn try_login(
+    mut commands: Commands,
+    client: Res<PocketbaseClient>,
+    mut login_ev: EventReader<PocketBaseLogin>,
+) {
     for ev in login_ev.read() {
-        commands.spawn(TypedRequest::<AuthSuccessResponse>::new(client.auth_with_password("users", &ev.user_name_or_mail, &ev.password)));
+        commands.spawn(TypedRequest::<AuthSuccessResponse>::new(
+            client.auth_with_password(&ev.user_name_or_mail, &ev.password),
+        ));
     }
 }
