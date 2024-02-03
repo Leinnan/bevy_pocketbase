@@ -438,7 +438,7 @@ dependencies = [
 [[package]]
 name = "bevy_http_client"
 version = "0.3.0"
-source = "git+https://github.com/Leinnan/bevy_http_client#83934831b23ea8831f7fd70857a419584f6b9f99"
+source = "git+https://github.com/Leinnan/bevy_http_client#fc9649d3ebc5f8cca4abd72dea37e5f90d9ed9f7"
 dependencies = [
  "bevy",
  "ehttp",
@@ -532,9 +532,7 @@ version = "0.1.0"
 dependencies = [
  "bevy",
  "bevy_http_client",
- "ehttp",
  "ehttp_pocketbase",
- "futures-lite 2.2.0",
  "serde",
  "serde_json",
 ]
@@ -2390,9 +2388,9 @@ dependencies = [
 
 [[package]]
 name = "winnow"
-version = "0.5.36"
+version = "0.5.37"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "818ce546a11a9986bc24f93d0cdf38a8a1a400f1473ea8c82e59f6e0ffab9249"
+checksum = "a7cad8365489051ae9f054164e459304af2e7e9bb407c958076c8bf4aef52da5"
 dependencies = [
  "memchr",
 ]

@@ -1,5 +1,5 @@
 use bevy::prelude::*;
-use bevy_http_client::typed::{TypedRequest, TypedResponse};
+use bevy_http_client::prelude::*;
 use ehttp_pocketbase::prelude::*;
 
 mod events;
@@ -20,8 +20,8 @@ pub struct PocketbaseClient(pub Client<User>);
 
 impl Plugin for PocketBasePlugin {
     fn build(&self, app: &mut App) {
-        bevy_http_client::register_request_type::<HealthCheckResponse>(app);
-        bevy_http_client::register_request_type::<AuthSuccessResponse<User>>(app);
+        register_request_type::<HealthCheckResponse>(app);
+        register_request_type::<AuthSuccessResponse<User>>(app);
         app.add_event::<events::PocketBaseLoginEvent>();
         app.add_state::<state::PocketbaseStatus>();
         app.add_systems(
@@ -48,7 +48,7 @@ impl Plugin for PocketBasePlugin {
 }
 
 fn check_connection(mut commands: Commands, client: Res<PocketbaseClient>) {
-    commands.spawn(TypedRequest::<HealthCheckResponse>::new(
+    commands.spawn(RequestBundle::<HealthCheckResponse>::new(
         client.health_check(),
     ));
 }
@@ -74,7 +74,7 @@ fn connection_response(
             }
             None => {
                 println!("Failed to parse: {:?}", response.result);
-                commands.spawn(TypedRequest::<HealthCheckResponse>::new(
+                commands.spawn(RequestBundle::<HealthCheckResponse>::new(
                     client.health_check(),
                 ));
             }
@@ -111,7 +111,7 @@ fn try_login(
     mut login_ev: EventReader<events::PocketBaseLoginEvent>,
 ) {
     for ev in login_ev.read() {
-        commands.spawn(TypedRequest::<AuthSuccessResponse<User>>::new(
+        commands.spawn(RequestBundle::<AuthSuccessResponse<User>>::new(
             client.auth().login(&ev.user_name_or_mail, &ev.password),
         ));
     }
