@@ -438,7 +438,8 @@ dependencies = [
 [[package]]
 name = "bevy_http_client"
 version = "0.3.0"
-source = "git+https://github.com/Leinnan/bevy_http_client#fc9649d3ebc5f8cca4abd72dea37e5f90d9ed9f7"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "b8984c7efdd7c9e80ef7ca8a3c170a5ebb8a123fc9e8423833615bcb219a3232"
 dependencies = [
  "bevy",
  "ehttp",
