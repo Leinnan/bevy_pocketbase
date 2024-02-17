@@ -1,5 +1,5 @@
 use bevy::prelude::*;
-use bevy_http_client::prelude::*;
+use bevy_ehttp::prelude::*;
 use ehttp_pocketbase::prelude::*;
 
 mod events;
@@ -20,16 +20,16 @@ pub struct PocketbaseClient(pub Client<User>);
 
 impl Plugin for PocketBasePlugin {
     fn build(&self, app: &mut App) {
-        register_request_type::<HealthCheckResponse>(app);
-        register_request_type::<AuthSuccessResponse<User>>(app);
+        app.register_request_type::<HealthCheckResponse>()
+            .register_request_type::<AuthSuccessResponse<User>>();
         app.add_event::<events::PocketBaseLoginEvent>();
-        app.add_state::<state::PocketbaseStatus>();
+        app.init_state::<state::PocketbaseStatus>();
         app.add_systems(
             Update,
             (|mut next_state: ResMut<NextState<state::PocketbaseStatus>>| {
                 next_state.set(state::PocketbaseStatus::CheckInternet);
             })
-            .run_if(resource_added::<PocketbaseClient>()),
+            .run_if(resource_added::<PocketbaseClient>),
         );
         app.add_systems(
             OnEnter(state::PocketbaseStatus::CheckInternet),
@@ -56,13 +56,10 @@ fn check_connection(mut commands: Commands, client: Res<PocketbaseClient>) {
 fn connection_response(
     mut commands: Commands,
     client: Res<PocketbaseClient>,
-    q: Query<
-        (Entity, &TypedResponse<HealthCheckResponse>),
-        Added<TypedResponse<HealthCheckResponse>>,
-    >,
+    mut events: EventReader<TypedResponseEvent<HealthCheckResponse>>,
     mut next_state: ResMut<NextState<state::PocketbaseStatus>>,
 ) {
-    for (e, response) in q.iter() {
+    for response in events.read() {
         match response.parse() {
             Some(v) => {
                 println!("response: {:?}", v);
@@ -79,17 +76,15 @@ fn connection_response(
                 ));
             }
         }
-        commands.entity(e).despawn_recursive();
     }
 }
 
 fn handle_login(
-    mut commands: Commands,
-    responses: Query<(Entity, &TypedResponse<AuthSuccessResponse<User>>)>,
+    mut events: EventReader<TypedResponseEvent<AuthSuccessResponse<User>>>,
     mut next_state: ResMut<NextState<state::PocketbaseStatus>>,
     mut client: ResMut<PocketbaseClient>,
 ) {
-    for (entity, response) in responses.iter() {
+    for response in events.read() {
         match response.parse() {
             Some(v) => {
                 println!("response: {:?}", v);
@@ -101,7 +96,6 @@ fn handle_login(
                 println!("Failed to parse: {:?}", response.result);
             }
         }
-        commands.entity(entity).despawn_recursive();
     }
 }
 

@@ -1,5 +1,5 @@
 use bevy::{app::ScheduleRunnerPlugin, prelude::*};
-use bevy_http_client::HttpClientPlugin;
+use bevy_ehttp::HttpPlugin;
 use bevy_pocketbase::prelude::*;
 
 use std::time::Duration;
@@ -11,7 +11,7 @@ fn main() {
                 1.0 / 60.0,
             ))),
         )
-        .add_plugins((HttpClientPlugin, PocketBasePlugin))
+        .add_plugins((HttpPlugin, PocketBasePlugin))
         .init_resource::<PocketbaseClient>()
         .add_systems(OnEnter(PocketbaseStatus::WaitingForCredentials), try_login)
         .run();

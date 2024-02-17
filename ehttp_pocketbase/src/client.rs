@@ -54,9 +54,7 @@ impl<T> Client<T> {
     }
 
     pub fn auth(&self) -> AuthManager<T> {
-        AuthManager::<T>{
-            client: &self
-        }
+        AuthManager::<T> { client: &self }
     }
 
     pub fn health_check(&self) -> Request {

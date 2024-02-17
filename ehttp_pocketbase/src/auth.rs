@@ -1,12 +1,15 @@
 use ehttp::Request;
 use serde_json::json;
 
-use crate::{client::{Client, User}, requester::Requester};
+use crate::{
+    client::{Client, User},
+    requester::Requester,
+};
 
-pub struct AuthManager<'a, T>{
-    pub client: &'a Client<T>
+pub struct AuthManager<'a, T> {
+    pub client: &'a Client<T>,
 }
-impl<'a, T> AuthManager<'a,T> {
+impl<'a, T> AuthManager<'a, T> {
     pub fn login(&self, identifier: &str, password: &str) -> Request {
         let url = format!(
             "{}/api/collections/{}/auth-with-password",
